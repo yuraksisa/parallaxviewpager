@@ -28,6 +28,8 @@ public class ParallaxViewPager extends ViewPager {
     private int projectedWidth;
     private float overlap;
     private OnPageChangeListener secondOnPageChangeListener;
+    private float mDestinationXCorrection=0f;
+    private Rect mAdjustedDestination;
 
     public ParallaxViewPager(Context context) {
         super(context);
@@ -42,6 +44,7 @@ public class ParallaxViewPager extends ViewPager {
     private void init() {
         source = new Rect();
         destination = new Rect();
+        mAdjustedDestination = new Rect();
         scaleType = FIT_HEIGHT;
         overlap = OVERLAP_HALF;
 
@@ -72,6 +75,18 @@ public class ParallaxViewPager extends ViewPager {
                 }
             }
         });
+    }
+    
+    @Override
+    public void setCurrentItem(int item) {
+    	super.setCurrentItem(item);
+    	float destinationStart = (int) Math.floor((item - CORRECTION_PERCENTAGE) * getWidth());
+    	if (destinationStart > projectedWidth) {
+    	  mDestinationXCorrection = destinationStart;
+    	}
+    	else {
+    	  mDestinationXCorrection=0; 
+    	}
     }
 
     @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -187,8 +202,13 @@ public class ParallaxViewPager extends ViewPager {
     }
 
     @Override protected void onDraw(Canvas canvas) {
-        if (bitmap != null)
-            canvas.drawBitmap(bitmap, source, destination, null);
+        if (bitmap != null) {
+        	 mAdjustedDestination.top = destination.top;
+        	 mAdjustedDestination.left = destination.left - (int) mDestinationXCorrection;
+        	 mAdjustedDestination.bottom = destination.bottom;
+        	 mAdjustedDestination.right = destination.right - (int) mDestinationXCorrection;  
+             canvas.drawBitmap(bitmap, source, mAdjustedDestination, null);
+        }
     }
 
     public void addOnPageChangeListener(OnPageChangeListener listener) {
